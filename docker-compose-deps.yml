@@ -1,10 +1,15 @@
-version: "3.3"
+version: '3.3'
 services:
    db:
       image: postgres
       command: /bin/bash -c "/shell_scripts/configure_and_start_docker_postgres.sh"
       volumes:
-         - ./src/main/shell:/shell_scripts
-         - ./src/main/sql:/sql_scripts
+      - ./src/main/shell:/shell_scripts
+      - ./src/main/sql:/sql_scripts
       ports:
-         - 5433:5432
+      - 5433:5432
+   message:
+      image: rabbitmq:management
+      ports:
+      - 5672:5672
+      - 15672:15672

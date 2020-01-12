@@ -1,5 +1,8 @@
 package org.hunter.userrequestlogeventingservice.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -18,7 +21,9 @@ public class RabbitConfig {
 
 	@Bean
 	public Queue queue() {
-		return new Queue("userrequestlog");
+	    Map<String, Object> args = new HashMap<String, Object>();
+	    args.put("x-message-ttl", 300000);
+		return new Queue("userrequestlog", true, false, false, args);
 	}
 
 	@Bean
