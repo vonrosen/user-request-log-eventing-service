@@ -1,6 +1,7 @@
 package org.hunter.userrequestlogeventingservice.service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import org.hunter.model.UserView;
 import org.hunter.userrequestlogeventingservice.config.AppProperties;
@@ -31,12 +32,15 @@ public class RabbitMqService {
             throws IOException {
 
         try {
+            if (userRequestLog == null || userRequestLog.getUserId() == null || userRequestLog.getMaxPaymentAmount() == null) {
+                channel.basicReject(tag, false);
+                return;
+            }
             restTemplate.getForObject(
                     appProperties.getUserServiceBaseUrl() + "/" + userRequestLog.getUserId().toString(),
                     UserView.class);
-
             UserRequestLog userRequestLogForSave = new UserRequestLog(null, userRequestLog.getUserId(),
-                    userRequestLog.getMaxPaymentAmountCents());
+                    userRequestLog.getMaxPaymentAmount().multiply(BigDecimal.valueOf(100)).toBigInteger());
             userRequestLogRepository.save(userRequestLogForSave);
             channel.basicAck(tag, false);
         }
