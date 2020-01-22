@@ -1,7 +1,6 @@
 package org.hunter.userrequestlogeventingservice.model;
 
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
@@ -17,10 +16,6 @@ public class UserRequestLog {
     private UUID userId;
     @Column(value = "max_payment_value_cents")
     private BigInteger maxPaymentAmountCents;
-    @Column(value = "created")
-    private Timestamp created;
-    @Column(value = "updated")
-    private Timestamp updated;
 
     public UserRequestLog(UUID id, UUID userId, BigInteger maxPaymentAmountCents) {
         this.id = id;
@@ -39,21 +34,4 @@ public class UserRequestLog {
     public BigInteger getMaxPaymentAmountCents() {
         return maxPaymentAmountCents;
     }
-
-    public Timestamp getCreated() {
-        return created;
-    }
-
-    public void setCreated(Timestamp created) {
-        this.created = created;
-    }
-
-    public Timestamp getUpdated() {
-        return updated;
-    }
-
-    public void setUpdated(Timestamp updated) {
-        this.updated = updated;
-    }
-
 }
