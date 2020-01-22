@@ -1,8 +1,10 @@
 package org.hunter.userrequestlogeventingservice.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.hunter.userrequestlogeventingservice.repository.UserRequestLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +29,10 @@ public class UserRequestLogEventingServiceController {
     @GetMapping(path = "/{id}", produces = "application/json")
     public List<UserRequestLogView> getUserHistory(@PathVariable UUID id) {
         try {
-            return userRequestLogRepository.findByUserId(id);
+			return userRequestLogRepository
+					.findByUserId(id).stream().map(log -> new UserRequestLogView(log.getUserId(),
+							log.getMaxPaymentAmount().divide(BigDecimal.valueOf(100)), log.getCreated(), log.getUpdated()))
+					.collect(Collectors.toList());
         }
         catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
