@@ -12,7 +12,7 @@ import com.hunter.model.UserRequestLogView;
 
 public interface UserRequestLogRepository extends CrudRepository<UserRequestLog, UUID> {
 
-    @Query(" select user_id, max_payment_value_cents / 100 as max_payment_amount, created, updated from user_request_log where user_id = :userId "
+    @Query(" select user_id, max_payment_value_cents as max_payment_amount, created, updated from user_request_log where user_id = :userId "
             + "order by created desc limit 10")
     List<UserRequestLogView> findByUserId(@Param("userId") UUID userId);
 
