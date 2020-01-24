@@ -74,9 +74,9 @@
 
 	<profiles>
 		<profile>
-			<id>docker</id>
+			<id>local</id>
 			<properties>
-				<activatedProperties>docker</activatedProperties>
+				<activatedProperties>local</activatedProperties>
 			</properties>
 			<activation>
 				<activeByDefault>true</activeByDefault>
