@@ -2,10 +2,9 @@
 
 apt-get update
 apt-get install -y curl
-curl -O 'https://dl.bintray.com/rabbitmq/community-plugins/3.6.x/rabbitmq_delayed_message_exchange/rabbitmq_delayed_message_exchange-20171215-3.6.x.zip'
+curl -O 'https://github.com/rabbitmq/rabbitmq-delayed-message-exchange/releases/download/v3.8.0/rabbitmq_delayed_message_exchange-3.8.0.ez' -L
 apt-get install -y unzip
-unzip ./rabbitmq_delayed_message_exchange-20171215-3.6.x.zip
-cp ./rabbitmq_delayed_message_exchange-20171215-3.6.x.ez /opt/rabbitmq/plugins/
+cp ./rabbitmq_delayed_message_exchange-3.8.0.ez /opt/rabbitmq/plugins/
 rabbitmq-plugins enable rabbitmq_delayed_message_exchange
 cat >/etc/rabbitmq/rabbitmq.conf <<EOL
 loopback_users.guest = false
