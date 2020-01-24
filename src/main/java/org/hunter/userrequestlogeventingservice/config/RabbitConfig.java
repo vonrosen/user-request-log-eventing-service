@@ -36,12 +36,12 @@ public class RabbitConfig {
 
 	@Bean
 	public Queue dlQueue() {
-		return new Queue(DEAD_LETTER_QUEUE);
+		return QueueBuilder.durable(DEAD_LETTER_QUEUE).withArgument("x-message-ttl", 10000).build();
 	}
 
 	@Bean
 	public Queue parkingLotQueue() {
-		return new Queue(PARKING_LOT_QUEUE);
+		return QueueBuilder.durable(PARKING_LOT_QUEUE).build();
 	}
 
 	@Bean

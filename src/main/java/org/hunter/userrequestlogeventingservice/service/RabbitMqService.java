@@ -50,12 +50,14 @@ public class RabbitMqService {
             channel.basicAck(tag, false);
         }
         catch (Exception exc) {
-            channel.basicReject(tag, true);
+        		System.out.println("Exception processing message from queue " + RabbitConfig.QUEUE + " : " + exc.getMessage());
+            channel.basicReject(tag, false);
         }
     }
     
     @RabbitListener(queues = RabbitConfig.DEAD_LETTER_QUEUE)
-    public void rePublish(Message failedMessage) {
+    public void rePublish(Message failedMessage, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag)
+    			throws IOException {
         Map<String, Object> headers = failedMessage.getMessageProperties().getHeaders();
         Integer retriesHeader = (Integer) headers.get(RabbitConfig.X_RETRIES_HEADER);
         if (retriesHeader == null) {
@@ -63,12 +65,15 @@ public class RabbitMqService {
         }
         if (retriesHeader < 3) {
             headers.put(RabbitConfig.X_RETRIES_HEADER, retriesHeader + 1);
-            headers.put("x-delay", 5000 * retriesHeader);
+            headers.put("x-delay", 10000 * retriesHeader);
             rabbitTemplate.send(RabbitConfig.DELAY_EXCHANGE, RabbitConfig.QUEUE, failedMessage);
         }
         else {
+        		System.out.println("Parking message: " + failedMessage);
             rabbitTemplate.send(RabbitConfig.PARKING_LOT_QUEUE, failedMessage);
         }
+        
+        channel.basicReject(tag, false);
     }    
 
 }
