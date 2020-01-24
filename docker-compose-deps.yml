@@ -10,6 +10,9 @@ services:
       - 5433:5432
    message:
       image: rabbitmq:management
+      command: /bin/bash -c "/shell_scripts/configure_and_start_docker_rabbit.sh"
+      volumes:
+      - ./src/main/shell:/shell_scripts      
       ports:
       - 5672:5672
       - 15672:15672

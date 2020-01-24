@@ -2,17 +2,20 @@ package org.hunter.userrequestlogeventingservice.service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Map;
 
 import org.hunter.model.UserView;
 import org.hunter.userrequestlogeventingservice.config.AppProperties;
+import org.hunter.userrequestlogeventingservice.config.RabbitConfig;
 import org.hunter.userrequestlogeventingservice.model.UserRequestLog;
 import org.hunter.userrequestlogeventingservice.repository.UserRequestLogRepository;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import com.hunter.model.UserRequestLogView;
@@ -25,37 +28,47 @@ public class RabbitMqService {
     private UserRequestLogRepository userRequestLogRepository;
     @Autowired
     private AppProperties appProperties;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;    
     private RestTemplate restTemplate = new RestTemplate();
 
-    @RabbitListener(queues = "userrequestlog")
-    public void consume(UserRequestLogView userRequestLog, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag)
+    @RabbitListener(queues = RabbitConfig.QUEUE)
+    public void consume(UserRequestLogView userRequestLogView, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag)
             throws IOException {
 
         try {
-            if (userRequestLog == null || userRequestLog.getUserId() == null || userRequestLog.getMaxPaymentAmount() == null) {
+            if (userRequestLogView == null || userRequestLogView.getUserId() == null || userRequestLogView.getMaxPaymentAmount() == null) {
                 channel.basicReject(tag, false);
                 return;
             }
             restTemplate.getForObject(
-                    appProperties.getUserServiceBaseUrl() + "/" + userRequestLog.getUserId().toString(),
+                    appProperties.getUserServiceBaseUrl() + "/" + userRequestLogView.getUserId().toString(),
                     UserView.class);
-            UserRequestLog userRequestLogForSave = new UserRequestLog(null, userRequestLog.getUserId(),
-                    userRequestLog.getMaxPaymentAmount().multiply(BigDecimal.valueOf(100)).toBigInteger());
+            UserRequestLog userRequestLogForSave = new UserRequestLog(null, userRequestLogView.getUserId(),
+            		userRequestLogView.getMaxPaymentAmount().multiply(BigDecimal.valueOf(100)).toBigInteger());
             userRequestLogRepository.save(userRequestLogForSave);
             channel.basicAck(tag, false);
-        }
-        catch (RestClientResponseException re) {
-            if (re.getRawStatusCode() == 404) {
-                // if user not exist no retry
-                channel.basicReject(tag, false);
-            }
-            else {
-                channel.basicReject(tag, true);
-            }
         }
         catch (Exception exc) {
             channel.basicReject(tag, true);
         }
     }
+    
+    @RabbitListener(queues = RabbitConfig.DEAD_LETTER_QUEUE)
+    public void rePublish(Message failedMessage) {
+        Map<String, Object> headers = failedMessage.getMessageProperties().getHeaders();
+        Integer retriesHeader = (Integer) headers.get(RabbitConfig.X_RETRIES_HEADER);
+        if (retriesHeader == null) {
+            retriesHeader = Integer.valueOf(0);
+        }
+        if (retriesHeader < 3) {
+            headers.put(RabbitConfig.X_RETRIES_HEADER, retriesHeader + 1);
+            headers.put("x-delay", 5000 * retriesHeader);
+            rabbitTemplate.send(RabbitConfig.DELAY_EXCHANGE, RabbitConfig.QUEUE, failedMessage);
+        }
+        else {
+            rabbitTemplate.send(RabbitConfig.PARKING_LOT_QUEUE, failedMessage);
+        }
+    }    
 
 }
