@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.hunter.model.UserRequestLogView;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin
 @RequestMapping("/userrequestloghistory")
 public class UserRequestLogEventingServiceController {
 
